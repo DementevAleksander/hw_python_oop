@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Dict
 
 
 @dataclass
@@ -56,33 +56,26 @@ class Training:
 
 
 class Running(Training):
-    LEN_STEP: float = 0.65
-    M_IN_KM: int = 1000
-
     """Тренировка: бег."""
-    def __init__(self,
-                 action: int,
-                 duration: float,
-                 weight: float,
-                 ) -> None:
-        super().__init__(action, duration, weight)
+    CFCL_RUN_MLTPLC: int = 18
+    CFCL_RUN_SBTRC: int = 20
+    CNST_MINHR_RUN: int = 60
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-        CFCL_RUN_1: int = 18
-        CFCL_RUN_2: int = 20
-        MINHR_RUN_3: int = 60
         return (
-            (CFCL_RUN_1 * Training.get_mean_speed(self)
-             - CFCL_RUN_2)
-            * self.weight / self.M_IN_KM * self.duration * MINHR_RUN_3)
+            (self.CFCL_RUN_MLTPLC * self.get_mean_speed()
+             - self.CFCL_RUN_SBTRC)
+            * self.weight / self.M_IN_KM * self.duration * self.CNST_MINHR_RUN)
 
 
 class SportsWalking(Training):
-    LEN_STEP: float = 0.65
-    M_IN_KM: int = 1000
-
     """Тренировка: спортивная ходьба."""
+    CFCL_WLK_MLTPLC1: float = 0.035
+    CFCL_WLK_XPNTN: int = 2
+    CFCL_WLK_MLTPLC2: float = 0.029
+    CNST_MINHR_WLK: int = 60
+
     def __init__(self,
                  action: int,
                  duration: float,
@@ -94,22 +87,19 @@ class SportsWalking(Training):
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-        CFCL_WLK_1: float = 0.035
-        CFCL_WLK_2: int = 2
-        CFCL_WLK_3: float = 0.029
-        MINHR_WLK_4: int = 60
         return (
-            (CFCL_WLK_1 * self.weight
-             + (self.get_mean_speed()**CFCL_WLK_2 // self.height)
-             * CFCL_WLK_3 * self.weight)
-            * self.duration * MINHR_WLK_4)
+            (self.CFCL_WLK_MLTPLC1 * self.weight
+             + (self.get_mean_speed()**self.CFCL_WLK_XPNTN // self.height)
+             * self.CFCL_WLK_MLTPLC2 * self.weight)
+            * self.duration * self.CNST_MINHR_WLK)
 
 
 class Swimming(Training):
-    LEN_STEP: float = 1.38
-    M_IN_KM: int = 1000
-
     """Тренировка: плавание."""
+    LEN_STEP: float = 1.38
+    CFCL_SWM_MLTPLC: int = 2
+    CFCL_SWM_DDTN: float = 1.1
+
     def __init__(self,
                  action: int,
                  duration: float,
@@ -128,21 +118,21 @@ class Swimming(Training):
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-        CFCL_SWM_1: int = 2
-        CFCL_SWM_2: float = 1.1
-
         return (
-            (self.get_mean_speed() + CFCL_SWM_2)
-            * CFCL_SWM_1 * self.weight)
+            (self.get_mean_speed() + self.CFCL_SWM_DDTN)
+            * self.CFCL_SWM_MLTPLC * self.weight)
 
 
-def read_package(workout_type: List[str], data: List[int]) -> Training:
+def read_package(workout_type: str, data: List[int]) -> Training:
     """Прочитать данные полученные от датчиков."""
-    workout_type_class = {
+    workout_type_class: Dict[str, type] = {
         'SWM': Swimming,
         'RUN': Running,
         'WLK': SportsWalking
     }
+
+    if workout_type not in workout_type_class:
+        raise KeyError(f'Неизвестный идентификатор спорта: {workout_type}')
 
     return workout_type_class[workout_type](*data)
 
@@ -161,10 +151,5 @@ if __name__ == '__main__':
     ]
 
     for workout_type, data in packages:
-        if (workout_type == 'SWM'
-           or workout_type == 'RUN'
-           or workout_type == 'WLK'):
-            training = read_package(workout_type, data)
-            main(training)
-        else:
-            print("Невозможно определить данные!")
+        training = read_package(workout_type, data)
+        main(training)
