@@ -32,7 +32,7 @@ pip install -r requirements.txt
 
 ##### 4) Запустить приложение:
 ```
-python manage.py runserver
+python homework.py
 ```
 
 
